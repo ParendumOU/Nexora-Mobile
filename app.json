@@ -39,6 +39,14 @@
       "expo-router",
       "expo-secure-store",
       [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.25"
+          }
+        }
+      ],
+      [
         "expo-camera",
         {
           "cameraPermission": "Nexora uses the camera to scan the pairing QR code shown on your Nexora workspace."
