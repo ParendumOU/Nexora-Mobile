@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "Nexora",
+    "slug": "nexora-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "nexora",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a0a0f"
+    },
+    "backgroundColor": "#0a0a0f",
+    "primaryColor": "#6366f1",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.parendum.nexora",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Nexora uses the camera to scan the pairing QR code shown on your Nexora workspace.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.parendum.nexora",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0a0a0f"
+      },
+      "permissions": ["CAMERA"]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Nexora uses the camera to scan the pairing QR code shown on your Nexora workspace."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0a0a0f",
+          "image": "./assets/splash.png",
+          "resizeMode": "contain"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
