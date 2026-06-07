@@ -1,5 +1,44 @@
 import { useStore } from './store';
-import type { Agent, Chat, ChatMessage, Hierarchy, NotesResponse, Plan, Session, TaskItem } from './types';
+import type {
+  Agent,
+  Chat,
+  ChatMessage,
+  Hierarchy,
+  MessageMeta,
+  NotesResponse,
+  Plan,
+  RawMessage,
+  Role,
+  Session,
+  TaskItem,
+} from './types';
+
+// Map a raw API message → ChatMessage, mirroring the web frontend:
+// role is "assistant" when it has an agent (agent_id/agent_name), else "user";
+// metadata comes from metadata_.
+export function normalizeMessage(m: RawMessage): ChatMessage {
+  const isAgent = !!m.agent_id || m.role === 'assistant' || !!m.agent_name;
+  const meta = (m.metadata_ || {}) as MessageMeta & { tg_user_display?: string };
+  return {
+    id: m.id,
+    role: (isAgent ? 'assistant' : m.role === 'system' ? 'system' : 'user') as Role,
+    content: m.content,
+    createdAt: m.created_at,
+    agentName: isAgent ? m.agent_name ?? null : null,
+    userName: meta.tg_user_display || m.user_name || null,
+    userId: m.user_id ?? null,
+    excluded: m.excluded,
+    metadata: m.metadata_ ? meta : undefined,
+  };
+}
+
+// Web's display filter: drop empty messages and system-injected ones
+// (tool results / nudges / watchdog) which are excluded=true with no user_id.
+function isDisplayable(m: ChatMessage): boolean {
+  if (!m.content || !m.content.trim().length) return false;
+  if (m.excluded && !m.userId) return false;
+  return true;
+}
 
 export class ApiError extends Error {
   status: number;
@@ -130,7 +169,10 @@ export const api = {
   createChat: (body: { title?: string; agent_id?: string | null }) =>
     request<Chat>('/chats/', { method: 'POST', body: JSON.stringify(body) }),
   archiveChat: (id: string) => request<void>(`/chats/${id}`, { method: 'DELETE' }),
-  getMessages: (id: string) => request<ChatMessage[]>(`/chats/${id}/messages`),
+  getMessages: async (id: string): Promise<ChatMessage[]> => {
+    const raw = await request<RawMessage[]>(`/chats/${id}/messages`);
+    return (raw || []).map(normalizeMessage).filter(isDisplayable);
+  },
 
   cancelChat: (id: string) => request<void>(`/chats/${id}/cancel_all`, { method: 'POST' }),
 

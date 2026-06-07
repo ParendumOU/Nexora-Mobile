@@ -67,11 +67,28 @@ export interface ChatMessage {
   createdAt?: string;
   agentName?: string | null;
   userName?: string | null;
+  userId?: string | null;
+  excluded?: boolean;
   metadata?: MessageMeta;
   // local-only
   streaming?: boolean;
   pending?: boolean;
   error?: boolean;
+}
+
+// Raw shape returned by GET /chats/{id}/messages (snake_case + metadata_).
+export interface RawMessage {
+  id: string;
+  role: string;
+  content: string;
+  metadata_?: Record<string, unknown>;
+  provider_used?: string | null;
+  agent_id?: string | null;
+  agent_name?: string | null;
+  user_id?: string | null;
+  user_name?: string | null;
+  excluded?: boolean;
+  created_at?: string;
 }
 
 export interface ToolCall {
