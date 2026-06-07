@@ -19,7 +19,6 @@ export default function AppLayout() {
     >
       <Stack.Screen name="chats" options={{ headerShown: false }} />
       <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="new" options={{ presentation: 'modal', title: 'New conversation' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
     </Stack>
   );

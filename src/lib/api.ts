@@ -62,7 +62,7 @@ export async function pairDevice(
   };
 }
 
-async function refreshAccessToken(session: Session): Promise<string> {
+export async function refreshAccessToken(session: Session): Promise<string> {
   const res = await fetch(`${session.serverUrl}/api/auth/device/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

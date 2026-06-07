@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, wsUrlFor } from './api';
+import { api, refreshAccessToken, wsUrlFor } from './api';
 import { useStore } from './store';
 import type { ChatMessage, ToolCall, WsEvent } from './types';
 
@@ -120,6 +120,9 @@ export function useChat(chatId: string) {
       case 'error':
         setActivity(null);
         streamingId.current = null;
+        // Stale access JWT — the close handler reconnects with a freshly refreshed
+        // token, so don't surface it as a user-facing error.
+        if (evt.message === 'Unauthorized') break;
         setMessages((m) => [
           ...m,
           { id: localId(), role: 'system', content: evt.message, error: true },
@@ -138,8 +141,18 @@ export function useChat(chatId: string) {
     closedByUs.current = false;
     setStatus(attempts.current === 0 ? 'connecting' : 'reconnecting');
 
-    // Ensure a fresh-ish access token (cheap; refresh is server-validated).
-    const token = session.accessToken;
+    // Always connect with a freshly minted access JWT. The device access token is
+    // short-lived (15 min); refreshing here avoids the WS being rejected with
+    // "Unauthorized" and looping. If the device token itself is dead → force re-link.
+    let token: string;
+    try {
+      token = await refreshAccessToken(session);
+    } catch {
+      await useStore.getState().signOut();
+      return;
+    }
+    if (closedByUs.current) return;
+
     const socket = new WebSocket(wsUrlFor(session.serverUrl, chatId, token));
     ws.current = socket;
 
@@ -179,21 +192,31 @@ export function useChat(chatId: string) {
     (content: string, opts: SendOpts = {}) => {
       const text = content.trim();
       if (!text) return;
+      if (ws.current?.readyState !== WebSocket.OPEN) {
+        setMessages((m) => [
+          ...m,
+          { id: localId(), role: 'system', content: 'Not connected — reconnecting, try again in a moment.', error: true },
+        ]);
+        return;
+      }
       setMessages((m) => [
         ...m,
         { id: localId(), role: 'user', content: text, pending: true },
       ]);
+      // Frame matches the web frontend exactly (no agent by default; the platform
+      // routes to the default provider/agent).
       const frame = {
         type: 'message',
         content: text,
         agent_id: opts.agentId ?? null,
+        provider_chain_id: null,
         mode: opts.mode ?? 'flash',
+        model_name: null,
         enable_agent: true,
+        file_ids: [] as string[],
         client_message_id: localId(),
       };
-      if (ws.current?.readyState === WebSocket.OPEN) {
-        ws.current.send(JSON.stringify(frame));
-      }
+      ws.current.send(JSON.stringify(frame));
     },
     [],
   );

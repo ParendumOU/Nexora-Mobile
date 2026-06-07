@@ -18,6 +18,22 @@ export default function ChatsScreen() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  // Create a plain chat (no agent — the platform routes to the default provider/
+  // agent, same as the web frontend) and open it.
+  const newChat = useCallback(async () => {
+    if (creating) return;
+    setCreating(true);
+    try {
+      const chat = await api.createChat({ title: 'New Chat' });
+      router.push(`/(app)/chat/${chat.id}`);
+    } catch {
+      // ignore; pull-to-refresh / retry
+    } finally {
+      setCreating(false);
+    }
+  }, [creating, router]);
 
   const load = useCallback(async () => {
     try {
@@ -86,8 +102,20 @@ export default function ChatsScreen() {
                 No conversations yet
               </Text>
               <Text style={{ color: colors.textFaint, marginTop: 6, textAlign: 'center', fontSize: typography.size.sm }}>
-                Tap the button below to start chatting with one of your agents.
+                Tap the button below to start a conversation.
               </Text>
+              <Pressable
+                onPress={newChat}
+                style={{
+                  marginTop: spacing.xl,
+                  backgroundColor: colors.primary,
+                  borderRadius: radius.lg,
+                  paddingHorizontal: spacing.xl,
+                  paddingVertical: 12,
+                }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '600', fontSize: typography.size.md }}>New chat</Text>
+              </Pressable>
             </View>
           }
           renderItem={({ item }) => <ChatRow chat={item} onPress={() => router.push(`/(app)/chat/${item.id}`)} />}
@@ -97,8 +125,9 @@ export default function ChatsScreen() {
 
       {/* FAB */}
       <Pressable
-        onPress={() => router.push('/(app)/new')}
-        style={{ position: 'absolute', right: spacing.xl, bottom: insets.bottom + spacing.xl }}
+        onPress={newChat}
+        disabled={creating}
+        style={{ position: 'absolute', right: spacing.xl, bottom: insets.bottom + spacing.xl, opacity: creating ? 0.6 : 1 }}
       >
         <LinearGradient
           colors={gradients.brand}
