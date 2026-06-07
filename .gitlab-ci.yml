@@ -1,0 +1,83 @@
+# Nexora Mobile — GitLab CI
+#
+# Requires a masked CI/CD variable EXPO_TOKEN (Settings → CI/CD → Variables).
+# Create it at expo.dev → Account → Settings → Access tokens.
+#
+# Pipeline:
+#   validate  → type-check on every MR + main push
+#   build     → on push to main: trigger an EAS Android (APK) cloud build
+#               on tag:          trigger an EAS production (AAB) cloud build
+#               iOS:             manual trigger (needs Apple credentials in EAS)
+
+stages:
+  - validate
+  - build
+
+default:
+  image: node:20-bookworm
+  before_script:
+    - corepack enable
+    - corepack prepare pnpm@11.1.1 --activate
+    - pnpm config set store-dir .pnpm-store
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store
+
+variables:
+  EAS_PROFILE_ANDROID: preview      # APK, sideloadable
+  EAS_PROFILE_RELEASE: production    # AAB, store-ready
+
+# ── validate ──────────────────────────────────────────────────────────────────
+typecheck:
+  stage: validate
+  script:
+    - pnpm install --frozen-lockfile
+    - pnpm exec tsc --noEmit
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG'
+
+# ── build ───────────────────────────────────────────────────────────────────--
+.eas_base: &eas_base
+  stage: build
+  timeout: 1h
+  before_script:
+    - corepack enable
+    - corepack prepare pnpm@11.1.1 --activate
+    - |
+      if [ -z "$EXPO_TOKEN" ]; then
+        echo "EXPO_TOKEN is not set. Add it as a masked CI/CD variable (Settings → CI/CD → Variables)."
+        exit 1
+      fi
+    - pnpm install --frozen-lockfile
+
+# Auto APK build on every push to main. Waits for the cloud build so the pipeline
+# status reflects the build result. Swap to --no-wait for fire-and-forget.
+eas:android:
+  <<: *eas_base
+  script:
+    - pnpm dlx eas-cli@latest build --platform android --profile "$EAS_PROFILE_ANDROID" --non-interactive
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# Production AAB on tag push (e.g. v0.2.0).
+eas:release:
+  <<: *eas_base
+  script:
+    - pnpm dlx eas-cli@latest build --platform android --profile "$EAS_PROFILE_RELEASE" --non-interactive
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+# iOS is manual — first run will prompt EAS to set up Apple credentials.
+eas:ios:
+  <<: *eas_base
+  script:
+    - pnpm dlx eas-cli@latest build --platform ios --profile "$EAS_PROFILE_ANDROID" --non-interactive
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+      allow_failure: true

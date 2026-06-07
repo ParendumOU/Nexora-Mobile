@@ -183,4 +183,11 @@ before pairing. The web pairing UI is `Nexora/frontend` → Settings → **Devic
 - Full parity screens (agents builder, projects, issues, knowledge bases) — v1 is chat-first.
 - Multimodal image upload (`POST /chats/{id}/files` + `file_ids`) — wired in core, not yet in UI.
 - Push notifications, biometric lock on the keychain, Geist font bundling (currently system font),
-  WS mid-connection token refresh, GitLab CI (`tsc` + EAS on tag).
+  WS mid-connection token refresh.
+
+## 11. CI
+
+`.gitlab-ci.yml` — `validate` (tsc on MR/main/tag) + `build`. Push to `main` → `eas:android`
+(APK, `preview`). Tag → `eas:release` (AAB, `production`). `eas:ios` is manual. Requires a
+masked CI/CD variable **`EXPO_TOKEN`** (Settings → CI/CD → Variables). Runners use pnpm via
+corepack (CI is a clean ephemeral container — the host-npm rule doesn't apply there).
