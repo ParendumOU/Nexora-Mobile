@@ -36,3 +36,6 @@ GoogleService-Info.plist
 
 # eas
 eas.json.local
+
+# local build artifacts
+artifacts/
