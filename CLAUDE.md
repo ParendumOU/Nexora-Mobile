@@ -185,9 +185,22 @@ before pairing. The web pairing UI is `Nexora/frontend` → Settings → **Devic
 - Push notifications, biometric lock on the keychain, Geist font bundling (currently system font),
   WS mid-connection token refresh.
 
-## 11. CI
+## 11. CI / release
 
-`.gitlab-ci.yml` — `validate` (tsc on MR/main/tag) + `build`. Push to `main` → `eas:android`
-(APK, `preview`). Tag → `eas:release` (AAB, `production`). `eas:ios` is manual. Requires a
-masked CI/CD variable **`EXPO_TOKEN`** (Settings → CI/CD → Variables). Runners use pnpm via
-corepack (CI is a clean ephemeral container — the host-npm rule doesn't apply there).
+`.gitlab-ci.yml` stages: `validate` → `tag` → `build`.
+- **validate** (MR/main/tag): `tsc` + asserts `VERSION` == `app.json` expo.version == `package.json` version.
+- **tag** (`auto-tag`, main only): if `VERSION` has no matching git tag, creates & pushes `vX.Y.Z`.
+  Idempotent; never runs on tag pipelines so it can't loop.
+- **build**: `eas:android` (APK, `preview`) on main; `eas:release` (AAB, `production`) on tag;
+  `eas:ios` manual.
+
+**Release a version:** bump `VERSION` + `app.json` expo.version + `package.json` version together,
+push to `main`. CI tags it → tag fires `eas:release` **and** the GitLab tag-push webhook →
+NexoraGateway publishes a `ProductVersion(product="nexora-mobile")` → it appears in the NexoraWeb
+`/changelog` (which queries Gateway per product). NexoraDocs changelog is hand-edited MDX.
+
+**Required masked CI/CD vars:** `EXPO_TOKEN` (cloud builds), `GITLAB_PUSH_TOKEN`
+(project access token, `write_repository`, lets `auto-tag` push the tag). Configure the
+tag-push webhook once: GitLab → Settings → Webhooks → `https://nexora-gw.parendum.com/webhooks/gitlab/tag`,
+Tag push events, token = `GITLAB_WEBHOOK_SECRET`. Runners use pnpm via corepack (CI is a clean
+container — the host-npm rule doesn't apply there).
