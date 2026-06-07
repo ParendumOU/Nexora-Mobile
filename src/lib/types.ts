@@ -141,21 +141,30 @@ export interface NotesResponse {
   page_size: number;
 }
 
-export interface HierarchyChat {
+export interface HierarchyNode {
   id: string;
   title: string;
   agent_name?: string | null;
-  depth: number;
-  parent_id?: string | null;
-  status: string; // running | completed | failed | stalled | awaiting_input
-  task_counts?: Record<string, number>;
-  message_count?: number;
+  parent_chat_id?: string | null;
+  depth: number; // <0 ancestor, 0 current, >0 descendant (sub-agent)
+  node_type: 'ancestor' | 'current' | 'descendant';
+  status: string; // running | failed | stalled | completed | idle
+  task_counts?: {
+    total?: number;
+    running?: number;
+    failed?: number;
+    completed?: number;
+    pending?: number;
+    queued?: number;
+    paused?: number;
+  };
 }
 
 export interface Hierarchy {
   root_id: string;
-  current_chat_id: string;
-  chats_by_depth: HierarchyChat[];
+  anchor_id: string;
+  nodes: HierarchyNode[];
+  edges: { source: string; target: string }[];
 }
 
 // ── WebSocket server → client events ──────────────────────────────────────────

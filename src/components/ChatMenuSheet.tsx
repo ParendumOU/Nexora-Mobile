@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '@/lib/api';
-import type { ChatNote, HierarchyChat, PlanStep, TaskItem } from '@/lib/types';
+import type { ChatNote, HierarchyNode, PlanStep, TaskItem } from '@/lib/types';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 type Tab = 'tasks' | 'plan' | 'notes' | 'agents';
@@ -40,7 +40,7 @@ export function ChatMenuSheet({
   const [plan, setPlan] = useState<PlanStep[]>([]);
   const [planTitle, setPlanTitle] = useState<string | null>(null);
   const [notes, setNotes] = useState<ChatNote[]>([]);
-  const [hierarchy, setHierarchy] = useState<HierarchyChat[]>([]);
+  const [hierarchy, setHierarchy] = useState<HierarchyNode[]>([]);
 
   useEffect(() => {
     if (!visible) return;
@@ -64,7 +64,7 @@ export function ChatMenuSheet({
           if (alive) setNotes(res?.notes ?? []);
         } else if (tab === 'agents') {
           const h = await api.getHierarchy(chatId).catch(() => null);
-          if (alive) setHierarchy(h?.chats_by_depth ?? []);
+          if (alive) setHierarchy(h?.nodes ?? []);
         }
       } finally {
         if (alive) setLoading(false);
@@ -139,7 +139,7 @@ export function ChatMenuSheet({
               {tab === 'tasks' && <TaskList tasks={tasks} />}
               {tab === 'plan' && <PlanList plan={plan} title={planTitle} />}
               {tab === 'notes' && <NoteList notes={notes} />}
-              {tab === 'agents' && <HierarchyList chats={hierarchy} currentId={chatId} />}
+              {tab === 'agents' && <HierarchyList nodes={hierarchy} currentId={chatId} />}
             </>
           )}
         </ScrollView>
@@ -253,22 +253,30 @@ function NoteList({ notes }: { notes: ChatNote[] }) {
   );
 }
 
-/** Agent execution hierarchy: the chat tree (root → sub-agent chats), indented by depth. */
-function HierarchyList({ chats, currentId }: { chats: HierarchyChat[]; currentId: string }) {
-  if (!chats.length) return <Empty text="No sub-agent activity yet." />;
+/** Agent execution hierarchy: the chat tree (ancestors → current → sub-agent chats).
+ * Sub-agent chats are the descendants (parent_chat_id chain) of the open chat. */
+function HierarchyList({ nodes, currentId }: { nodes: HierarchyNode[]; currentId: string }) {
+  // Only the current chat with no descendants = nothing to show as "agents".
+  const hasOthers = nodes.some((n) => n.id !== currentId);
+  if (!nodes.length || !hasOthers) return <Empty text="No sub-agents spawned in this chat yet." />;
+
+  // Normalize depths so the shallowest node sits at indent 0.
+  const minDepth = Math.min(...nodes.map((n) => n.depth));
+  const ordered = [...nodes].sort((a, b) => a.depth - b.depth);
+
   return (
     <>
-      {chats.map((c) => {
-        const counts = c.task_counts ?? {};
-        const total = Object.values(counts).reduce((a, b) => a + b, 0);
-        const isCurrent = c.id === currentId;
+      {ordered.map((n) => {
+        const total = n.task_counts?.total ?? 0;
+        const isCurrent = n.id === currentId;
+        const roleLabel = n.node_type === 'ancestor' ? 'parent' : n.node_type === 'descendant' ? 'sub-agent' : 'here';
         return (
           <Row
-            key={c.id}
-            indent={c.depth}
-            title={`${c.agent_name || c.title}${isCurrent ? '  ·  (here)' : ''}`}
-            sub={total ? `${total} task${total === 1 ? '' : 's'} · ${c.message_count ?? 0} msgs` : `${c.message_count ?? 0} msgs`}
-            status={c.status}
+            key={n.id}
+            indent={n.depth - minDepth}
+            title={`${n.agent_name || n.title}${isCurrent ? '  ·  (here)' : ''}`}
+            sub={`${roleLabel}${total ? ` · ${total} task${total === 1 ? '' : 's'}` : ''}`}
+            status={n.status}
           />
         );
       })}
