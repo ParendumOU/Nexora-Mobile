@@ -272,7 +272,12 @@ export function MessageBubble({ msg, showAgent }: { msg: ChatMessage; showAgent:
         gap: 8,
       }}
     >
-      {!isUser && showAgent && <Avatar name={msg.agentName || 'Agent'} size={30} />}
+      {!isUser && showAgent ? (
+        <Avatar name={msg.agentName || 'Agent'} size={30} />
+      ) : !isUser ? (
+        // Reserve the avatar gutter so continuation bubbles align under the first.
+        <View style={{ width: 30 }} />
+      ) : null}
       <View style={{ maxWidth: '82%' }}>
         {!isUser && showAgent && msg.agentName ? (
           <Text style={{ color: colors.textFaint, fontSize: typography.size.xs, marginBottom: 3, marginLeft: 4 }}>
