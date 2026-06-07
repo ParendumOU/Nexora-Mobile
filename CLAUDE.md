@@ -192,12 +192,14 @@ before pairing. The web pairing UI is `Nexora/frontend` → Settings → **Devic
 - **tag** (`auto-tag`, main only): if `VERSION` has no matching git tag, creates & pushes `vX.Y.Z`.
   Idempotent; never runs on tag pipelines so it can't loop.
 - **build**: `eas:android` (APK, `preview`) on main; `eas:release` (AAB, `production`) on tag;
-  `eas:ios` manual.
+  `eas:ios` manual; `release` on tag creates a GitLab Release whose description is the matching
+  `CHANGELOG.md` section (fires a Release event → Gateway backfills the changelog notes).
 
-**Release a version:** bump `VERSION` + `app.json` expo.version + `package.json` version together,
-push to `main`. CI tags it → tag fires `eas:release` **and** the GitLab tag-push webhook →
-NexoraGateway publishes a `ProductVersion(product="nexora-mobile")` → it appears in the NexoraWeb
-`/changelog` (which queries Gateway per product). NexoraDocs changelog is hand-edited MDX.
+**Release a version:** add a `## <version>` section to `CHANGELOG.md`, bump `VERSION` +
+`app.json` expo.version + `package.json` version together, push to `main`. CI tags it → the tag
+fires `eas:release` (AAB), the `release` job (GitLab Release from the CHANGELOG section), **and**
+the GitLab tag-push/Release webhook → NexoraGateway publishes a `ProductVersion(product="nexora-mobile")`
+with notes → it appears in the NexoraWeb `/changelog`. NexoraDocs changelog is hand-edited MDX.
 
 **Required masked CI/CD vars:** `EXPO_TOKEN` (cloud builds), `GITLAB_PUSH_TOKEN`
 (project access token, `write_repository`, lets `auto-tag` push the tag). Configure the
