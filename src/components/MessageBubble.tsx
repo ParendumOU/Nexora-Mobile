@@ -7,14 +7,35 @@ import type { ChatMessage } from '@/lib/types';
 import { Avatar } from './Avatar';
 import { markdownStyles } from './markdownStyles';
 
-const THINK_RE = /<thinking>([\s\S]*?)<\/thinking>/gi;
+const THINK_RE = /<(?:thinking|think)>([\s\S]*?)<\/(?:thinking|think)>/gi;
+const PROPOSAL_RE = /<proposal>([\s\S]*?)<\/proposal>/gi;
 
-function splitThinking(content: string): { thinking: string | null; body: string } {
-  const matches = [...content.matchAll(THINK_RE)];
-  if (matches.length === 0) return { thinking: null, body: content };
-  const thinking = matches.map((m) => m[1].trim()).join('\n\n');
-  const body = content.replace(THINK_RE, '').trim();
-  return { thinking, body };
+// Mirrors the web frontend's strippedContent pipeline (components/chat/message.tsx):
+// extracts <thinking> into a collapsible and removes structural markers that are
+// signals for the backend (watchdog/tools/proposals), not user-facing content —
+// notably the bare <final/> turn-end marker.
+function cleanContent(content: string): { thinking: string | null; body: string } {
+  const thinks: string[] = [];
+  const body = content
+    .replace(THINK_RE, (_m, inner: string) => {
+      thinks.push(inner.trim());
+      return '';
+    })
+    .replace(PROPOSAL_RE, '')
+    .replace(
+      /<\s*(?:analysis_thought|internal_thought|scratchpad)\s*>[\s\S]*?<\s*\/\s*(?:analysis_thought|internal_thought|scratchpad)\s*>/gi,
+      '',
+    )
+    .replace(/<\s*final\s*\/?\s*>/gi, '')
+    .replace(/<\s*final\s*>\s*<\s*\/\s*final\s*>/gi, '')
+    .replace(/```[ \t]*(?:tool_calls|json|tools)[ \t]*\n[\s\S]*?```/gi, '')
+    .replace(/```[ \t]*\n(?:tool_calls|json|tools)\n[\s\S]*?```/gi, '')
+    .replace(/```[ \t]*\ntool_calls[\s\S]*?```/gi, '')
+    .replace(/<tool_calls>[\s\S]*?<\/tool_calls>/gi, '')
+    .replace(/^\*\*[\w_]+\*\*:[ \t]*$/gm, '')
+    .replace(/^```\s*$/gm, '')
+    .trim();
+  return { thinking: thinks.length ? thinks.join('\n\n') : null, body };
 }
 
 function ThinkingBlock({ text }: { text: string }) {
@@ -52,7 +73,7 @@ export function MessageBubble({ msg, showAgent }: { msg: ChatMessage; showAgent:
   const isUser = msg.role === 'user';
   const isSystem = msg.role === 'system';
   const { thinking, body } = useMemo(
-    () => (isUser ? { thinking: null, body: msg.content } : splitThinking(msg.content)),
+    () => (isUser ? { thinking: null, body: msg.content } : cleanContent(msg.content)),
     [msg.content, isUser],
   );
 
