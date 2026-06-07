@@ -100,9 +100,14 @@ async function request<T>(path: string, init: RequestInit = {}, retry = true): P
   if (res.status === 401 && retry) {
     try {
       await refreshAccessToken(session);
-    } catch {
-      await useStore.getState().signOut();
-      throw new ApiError(401, 'Session expired — please re-link this device');
+    } catch (e) {
+      // Only force a re-link when the device token itself is rejected (401).
+      // Transient failures (429 rate-limit, 5xx, network) must NOT sign the user out.
+      if (e instanceof ApiError && e.status === 401) {
+        await useStore.getState().signOut();
+        throw new ApiError(401, 'Session expired — please re-link this device');
+      }
+      throw new ApiError(503, 'Could not refresh session — try again in a moment');
     }
     return request<T>(path, init, false);
   }
@@ -119,11 +124,11 @@ async function request<T>(path: string, init: RequestInit = {}, retry = true): P
 // ── API surface ───────────────────────────────────────────────────────────────
 
 export const api = {
-  // chats
-  listChats: () => request<Chat[]>('/chats'),
+  // chats (trailing slash matches the backend routes — avoids a 307 redirect)
+  listChats: () => request<Chat[]>('/chats/'),
   getChat: (id: string) => request<Chat>(`/chats/${id}`),
   createChat: (body: { title?: string; agent_id?: string | null }) =>
-    request<Chat>('/chats', { method: 'POST', body: JSON.stringify(body) }),
+    request<Chat>('/chats/', { method: 'POST', body: JSON.stringify(body) }),
   archiveChat: (id: string) => request<void>(`/chats/${id}`, { method: 'DELETE' }),
   getMessages: (id: string) => request<ChatMessage[]>(`/chats/${id}/messages`),
 

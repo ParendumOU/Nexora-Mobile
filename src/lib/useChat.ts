@@ -14,7 +14,6 @@ interface SendOpts {
 }
 
 export function useChat(chatId: string) {
-  const session = useStore((s) => s.session);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<ConnStatus>('connecting');
   const [activity, setActivity] = useState<string | null>(null);
@@ -25,6 +24,7 @@ export function useChat(chatId: string) {
   const streamingId = useRef<string | null>(null);
   const attempts = useRef(0);
   const closedByUs = useRef(false);
+  const needRefresh = useRef(false);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── history ──
@@ -120,9 +120,12 @@ export function useChat(chatId: string) {
       case 'error':
         setActivity(null);
         streamingId.current = null;
-        // Stale access JWT — the close handler reconnects with a freshly refreshed
-        // token, so don't surface it as a user-facing error.
-        if (evt.message === 'Unauthorized') break;
+        // Stale access JWT — flag a refresh; the close handler mints a fresh token
+        // before reconnecting. Don't surface it as a user-facing error.
+        if (evt.message === 'Unauthorized') {
+          needRefresh.current = true;
+          break;
+        }
         setMessages((m) => [
           ...m,
           { id: localId(), role: 'system', content: evt.message, error: true },
@@ -136,24 +139,18 @@ export function useChat(chatId: string) {
     }
   }, []);
 
-  const connect = useCallback(async () => {
-    if (!session) return;
+  const connect = useCallback(() => {
+    // Read the session fresh from the store so a token refresh (which patches the
+    // store) is picked up on the next reconnect without recreating this callback.
+    const s = useStore.getState().session;
+    if (!s) return;
     closedByUs.current = false;
     setStatus(attempts.current === 0 ? 'connecting' : 'reconnecting');
 
-    // Always connect with a freshly minted access JWT. The device access token is
-    // short-lived (15 min); refreshing here avoids the WS being rejected with
-    // "Unauthorized" and looping. If the device token itself is dead → force re-link.
-    let token: string;
-    try {
-      token = await refreshAccessToken(session);
-    } catch {
-      await useStore.getState().signOut();
-      return;
-    }
-    if (closedByUs.current) return;
-
-    const socket = new WebSocket(wsUrlFor(session.serverUrl, chatId, token));
+    // Connect with the current access token (like the web frontend). We only refresh
+    // when the server actually rejects us with "Unauthorized" — refreshing on every
+    // connect would burst /auth/device/refresh into a 429 rate-limit.
+    const socket = new WebSocket(wsUrlFor(s.serverUrl, chatId, s.accessToken));
     ws.current = socket;
 
     socket.onopen = () => {
@@ -175,9 +172,19 @@ export function useChat(chatId: string) {
       attempts.current += 1;
       setStatus('reconnecting');
       const delay = Math.min(30000, 500 * 2 ** attempts.current + Math.random() * 400);
-      reconnectTimer.current = setTimeout(connect, delay);
+      reconnectTimer.current = setTimeout(async () => {
+        if (needRefresh.current) {
+          needRefresh.current = false;
+          try {
+            await refreshAccessToken(useStore.getState().session!);
+          } catch {
+            /* transient — retry on the next cycle with the existing token */
+          }
+        }
+        connect();
+      }, delay);
     };
-  }, [session, chatId, handleEvent]);
+  }, [chatId, handleEvent]);
 
   useEffect(() => {
     connect();
