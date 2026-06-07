@@ -1,5 +1,5 @@
 import { useStore } from './store';
-import type { Agent, Chat, ChatMessage, ChatNote, PlanStep, Session, TaskItem } from './types';
+import type { Agent, Chat, ChatMessage, Hierarchy, NotesResponse, Plan, Session, TaskItem } from './types';
 
 export class ApiError extends Error {
   status: number;
@@ -132,13 +132,16 @@ export const api = {
   archiveChat: (id: string) => request<void>(`/chats/${id}`, { method: 'DELETE' }),
   getMessages: (id: string) => request<ChatMessage[]>(`/chats/${id}/messages`),
 
+  cancelChat: (id: string) => request<void>(`/chats/${id}/cancel_all`, { method: 'POST' }),
+
   // agents
   listAgents: () => request<Agent[]>('/agents'),
 
-  // in-chat panels
+  // in-chat panels (endpoints + shapes verified against the web frontend)
   getTasks: (chatId: string) => request<TaskItem[]>(`/tasks?chat_id=${chatId}`),
-  getPlan: (chatId: string) => request<{ steps: PlanStep[] } | PlanStep[]>(`/plans?chat_id=${chatId}`),
-  getNotes: (chatId: string) => request<ChatNote[]>(`/chats/${chatId}/notes`),
+  getPlans: (chatId: string) => request<Plan[]>(`/plans?chat_id=${chatId}`),
+  getNotes: (chatId: string) => request<NotesResponse>(`/chats/${chatId}/notes?page=1&page_size=50`),
+  getHierarchy: (chatId: string) => request<Hierarchy>(`/chats/${chatId}/hierarchy`),
 
   // devices (self-management)
   listDevices: () => request<{ id: string; name: string; platform: string }[]>('/auth/device'),

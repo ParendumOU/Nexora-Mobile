@@ -6,11 +6,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChatComposer } from '@/components/ChatComposer';
 import { ChatMenuSheet } from '@/components/ChatMenuSheet';
 import { MessageBubble } from '@/components/MessageBubble';
+import { SubAgentStrip } from '@/components/SubAgentStrip';
 import { TypingDots } from '@/components/TypingDots';
 import { api } from '@/lib/api';
 import type { Chat, ChatMessage } from '@/lib/types';
 import { useChat } from '@/lib/useChat';
-import { colors, spacing, typography } from '@/theme/tokens';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function ChatScreen() {
   const { id, title: titleParam, agentId } = useLocalSearchParams<{ id: string; title?: string; agentId?: string }>();
@@ -18,7 +19,7 @@ export default function ChatScreen() {
   const router = useRouter();
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
-  const { messages, status, activity, loadingHistory, send } = useChat(id);
+  const { messages, status, activity, subAgents, isStreaming, loadingHistory, send, stop } = useChat(id);
   const [menuOpen, setMenuOpen] = useState(false);
   const [chat, setChat] = useState<Chat | null>(null);
 
@@ -107,11 +108,43 @@ export default function ChatScreen() {
         }
       />
 
-      {/* activity indicator */}
+      {/* live sub-agent activity */}
+      <SubAgentStrip activities={subAgents} />
+
+      {/* activity indicator + stop */}
       {activity ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: spacing.lg, paddingBottom: 4 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            paddingHorizontal: spacing.lg,
+            paddingBottom: 4,
+          }}
+        >
           <TypingDots />
-          <Text style={{ color: colors.textFaint, fontSize: typography.size.xs }}>{activity}</Text>
+          <Text style={{ color: colors.textFaint, fontSize: typography.size.xs, flex: 1 }} numberOfLines={1}>
+            {activity}
+          </Text>
+          {isStreaming ? (
+            <Pressable
+              onPress={stop}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                backgroundColor: colors.surface,
+                borderRadius: radius.full,
+                borderWidth: 0.5,
+                borderColor: colors.border,
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+              }}
+            >
+              <Ionicons name="stop" size={12} color={colors.danger} />
+              <Text style={{ color: colors.textMuted, fontSize: typography.size.xs }}>Stop</Text>
+            </Pressable>
+          ) : null}
         </View>
       ) : null}
 

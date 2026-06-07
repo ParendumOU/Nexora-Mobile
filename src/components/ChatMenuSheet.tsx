@@ -3,23 +3,24 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '@/lib/api';
-import type { ChatNote, PlanStep, TaskItem } from '@/lib/types';
+import type { ChatNote, HierarchyChat, PlanStep, TaskItem } from '@/lib/types';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
-type Tab = 'tasks' | 'plan' | 'notes' | 'hierarchy';
+type Tab = 'tasks' | 'plan' | 'notes' | 'agents';
 
 const TABS: { key: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'tasks', label: 'Tasks', icon: 'checkbox-outline' },
   { key: 'plan', label: 'Plan', icon: 'list-outline' },
   { key: 'notes', label: 'Notes', icon: 'document-text-outline' },
-  { key: 'hierarchy', label: 'Agents', icon: 'git-branch-outline' },
+  { key: 'agents', label: 'Agents', icon: 'git-branch-outline' },
 ];
 
 const statusColor = (s: string) => {
-  const v = s?.toLowerCase() ?? '';
+  const v = (s || '').toLowerCase();
   if (v.includes('success') || v.includes('done') || v.includes('complete')) return colors.success;
-  if (v.includes('fail') || v.includes('error')) return colors.danger;
-  if (v.includes('run') || v.includes('progress')) return colors.primary;
+  if (v.includes('fail') || v.includes('error') || v.includes('stall')) return colors.danger;
+  if (v.includes('run') || v.includes('progress') || v.includes('queue')) return colors.primary;
+  if (v.includes('await') || v.includes('pending') || v.includes('pause')) return colors.warning;
   return colors.textFaint;
 };
 
@@ -37,7 +38,9 @@ export function ChatMenuSheet({
   const [loading, setLoading] = useState(false);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [plan, setPlan] = useState<PlanStep[]>([]);
+  const [planTitle, setPlanTitle] = useState<string | null>(null);
   const [notes, setNotes] = useState<ChatNote[]>([]);
+  const [hierarchy, setHierarchy] = useState<HierarchyChat[]>([]);
 
   useEffect(() => {
     if (!visible) return;
@@ -45,16 +48,23 @@ export function ChatMenuSheet({
     setLoading(true);
     const run = async () => {
       try {
-        if (tab === 'tasks' || tab === 'hierarchy') {
+        if (tab === 'tasks') {
           const t = await api.getTasks(chatId).catch(() => []);
           if (alive) setTasks(Array.isArray(t) ? t : []);
         } else if (tab === 'plan') {
-          const p = await api.getPlan(chatId).catch(() => []);
-          const steps = Array.isArray(p) ? p : (p?.steps ?? []);
-          if (alive) setPlan(steps);
+          const plans = await api.getPlans(chatId).catch(() => []);
+          // The active plan (fallback to the first) drives the panel.
+          const active = (plans || []).find((p) => p.status === 'active') ?? (plans || [])[0];
+          if (alive) {
+            setPlan(active?.steps ?? []);
+            setPlanTitle(active?.title ?? null);
+          }
         } else if (tab === 'notes') {
-          const n = await api.getNotes(chatId).catch(() => []);
-          if (alive) setNotes(Array.isArray(n) ? n : []);
+          const res = await api.getNotes(chatId).catch(() => null);
+          if (alive) setNotes(res?.notes ?? []);
+        } else if (tab === 'agents') {
+          const h = await api.getHierarchy(chatId).catch(() => null);
+          if (alive) setHierarchy(h?.chats_by_depth ?? []);
         }
       } finally {
         if (alive) setLoading(false);
@@ -88,7 +98,6 @@ export function ChatMenuSheet({
           <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.borderStrong }} />
         </View>
 
-        {/* segmented tabs */}
         <View style={{ flexDirection: 'row', paddingHorizontal: spacing.md, gap: 8, marginBottom: spacing.sm }}>
           {TABS.map((t) => {
             const active = t.key === tab;
@@ -128,9 +137,9 @@ export function ChatMenuSheet({
           ) : (
             <>
               {tab === 'tasks' && <TaskList tasks={tasks} />}
-              {tab === 'hierarchy' && <Hierarchy tasks={tasks} />}
-              {tab === 'plan' && <PlanList plan={plan} />}
+              {tab === 'plan' && <PlanList plan={plan} title={planTitle} />}
               {tab === 'notes' && <NoteList notes={notes} />}
+              {tab === 'agents' && <HierarchyList chats={hierarchy} currentId={chatId} />}
             </>
           )}
         </ScrollView>
@@ -143,7 +152,7 @@ function Empty({ text }: { text: string }) {
   return <Text style={{ color: colors.textFaint, textAlign: 'center', marginTop: 28 }}>{text}</Text>;
 }
 
-function Row({ title, sub, status }: { title: string; sub?: string; status?: string }) {
+function Row({ title, sub, status, indent = 0 }: { title: string; sub?: string; status?: string; indent?: number }) {
   return (
     <View
       style={{
@@ -151,6 +160,7 @@ function Row({ title, sub, status }: { title: string; sub?: string; status?: str
         alignItems: 'center',
         gap: 10,
         paddingVertical: 11,
+        paddingLeft: indent * 18,
         borderBottomWidth: 0.5,
         borderBottomColor: colors.divider,
       }}
@@ -169,24 +179,44 @@ function Row({ title, sub, status }: { title: string; sub?: string; status?: str
 
 function TaskList({ tasks }: { tasks: TaskItem[] }) {
   if (!tasks.length) return <Empty text="No tasks in this conversation yet." />;
+  // Render parents then their children, indented.
+  const roots = tasks.filter((t) => !t.parent_id);
+  const childrenOf = (id: string) => tasks.filter((t) => t.parent_id === id);
+  const rows: { task: TaskItem; depth: number }[] = [];
+  const walk = (t: TaskItem, depth: number) => {
+    rows.push({ task: t, depth });
+    childrenOf(t.id).forEach((c) => walk(c, depth + 1));
+  };
+  (roots.length ? roots : tasks).forEach((t) => walk(t, 0));
   return (
     <>
-      {tasks.map((t) => (
-        <Row key={t.id} title={t.title} sub={t.agent_name ?? undefined} status={t.status} />
+      {rows.map(({ task, depth }) => (
+        <Row
+          key={task.id}
+          title={task.title}
+          sub={task.assigned_agent_name ?? undefined}
+          status={task.status}
+          indent={depth}
+        />
       ))}
     </>
   );
 }
 
-function PlanList({ plan }: { plan: PlanStep[] }) {
+function PlanList({ plan, title }: { plan: PlanStep[]; title: string | null }) {
   if (!plan.length) return <Empty text="No plan has been laid out yet." />;
   return (
     <>
+      {title ? (
+        <Text style={{ color: colors.text, fontWeight: '600', fontSize: typography.size.md, marginBottom: 6 }}>
+          {title}
+        </Text>
+      ) : null}
       {plan
         .slice()
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
         .map((s, i) => (
-          <Row key={s.id} title={`${i + 1}. ${s.title}`} status={s.status} />
+          <Row key={s.id} title={`${i + 1}. ${s.title}`} sub={s.note ?? undefined} status={s.status} />
         ))}
     </>
   );
@@ -208,38 +238,40 @@ function NoteList({ notes }: { notes: ChatNote[] }) {
             borderColor: colors.border,
           }}
         >
+          {n.description ? (
+            <Text style={{ color: colors.textMuted, fontSize: typography.size.xs, marginBottom: 4 }}>
+              {n.description}
+            </Text>
+          ) : null}
           <Text style={{ color: colors.text, fontSize: typography.size.base, lineHeight: 21 }}>{n.content}</Text>
+          {n.author ? (
+            <Text style={{ color: colors.textFaint, fontSize: 10, marginTop: 6 }}>— {n.author}</Text>
+          ) : null}
         </View>
       ))}
     </>
   );
 }
 
-/** Lightweight agent tree: groups tasks by their assigned agent. */
-function Hierarchy({ tasks }: { tasks: TaskItem[] }) {
-  if (!tasks.length) return <Empty text="No sub-agent activity yet." />;
-  const byAgent = new Map<string, TaskItem[]>();
-  for (const t of tasks) {
-    const key = t.agent_name || 'Orchestrator';
-    if (!byAgent.has(key)) byAgent.set(key, []);
-    byAgent.get(key)!.push(t);
-  }
+/** Agent execution hierarchy: the chat tree (root → sub-agent chats), indented by depth. */
+function HierarchyList({ chats, currentId }: { chats: HierarchyChat[]; currentId: string }) {
+  if (!chats.length) return <Empty text="No sub-agent activity yet." />;
   return (
     <>
-      {[...byAgent.entries()].map(([agent, items]) => (
-        <View key={agent} style={{ marginBottom: spacing.md }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <Ionicons name="hardware-chip-outline" size={16} color={colors.primaryAlt} />
-            <Text style={{ color: colors.text, fontWeight: '600', fontSize: typography.size.base }}>{agent}</Text>
-            <Text style={{ color: colors.textFaint, fontSize: typography.size.xs }}>({items.length})</Text>
-          </View>
-          {items.map((t) => (
-            <View key={t.id} style={{ paddingLeft: 24 }}>
-              <Row title={t.title} status={t.status} />
-            </View>
-          ))}
-        </View>
-      ))}
+      {chats.map((c) => {
+        const counts = c.task_counts ?? {};
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
+        const isCurrent = c.id === currentId;
+        return (
+          <Row
+            key={c.id}
+            indent={c.depth}
+            title={`${c.agent_name || c.title}${isCurrent ? '  ·  (here)' : ''}`}
+            sub={total ? `${total} task${total === 1 ? '' : 's'} · ${c.message_count ?? 0} msgs` : `${c.message_count ?? 0} msgs`}
+            status={c.status}
+          />
+        );
+      })}
     </>
   );
 }

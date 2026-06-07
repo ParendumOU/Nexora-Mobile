@@ -42,11 +42,19 @@ export interface Chat {
 
 export type Role = 'user' | 'assistant' | 'system';
 
+export type MessageKind =
+  | 'task_brief'
+  | 'task_error'
+  | 'tool_result_injection'
+  | 'nudge'
+  | 'child_task_injection'
+  | null;
+
 export interface MessageMeta {
   provider?: string;
   model?: string;
-  kind?: string | null;
-  usage?: { input_tokens?: number; output_tokens?: number };
+  kind?: MessageKind;
+  usage?: { input_tokens?: number; output_tokens?: number; cached_input_tokens?: number };
   cost_usd?: number;
   duration_ms?: number;
   agentName?: string | null;
@@ -75,22 +83,62 @@ export interface ToolCall {
 
 export interface TaskItem {
   id: string;
+  chat_id?: string;
+  parent_id?: string | null;
   title: string;
-  status: string;
-  agent_name?: string | null;
+  status: string; // pending | running | queued | completed | failed | paused
+  assigned_agent_name?: string | null;
+  sub_chat_id?: string | null;
+  created_at?: string;
 }
 
 export interface PlanStep {
   id: string;
   title: string;
-  status: string;
-  order?: number;
+  status: string; // pending | in_progress | done | failed | skipped
+  position?: number;
+  note?: string | null;
+}
+
+export interface Plan {
+  id: string;
+  chat_id: string;
+  title: string;
+  status: string; // active | completed | cancelled
+  steps: PlanStep[];
 }
 
 export interface ChatNote {
   id: string;
   content: string;
+  description?: string | null;
+  author?: string | null;
   created_at?: string;
+}
+
+export interface NotesResponse {
+  chat_id: string;
+  notes: ChatNote[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface HierarchyChat {
+  id: string;
+  title: string;
+  agent_name?: string | null;
+  depth: number;
+  parent_id?: string | null;
+  status: string; // running | completed | failed | stalled | awaiting_input
+  task_counts?: Record<string, number>;
+  message_count?: number;
+}
+
+export interface Hierarchy {
+  root_id: string;
+  current_chat_id: string;
+  chats_by_depth: HierarchyChat[];
 }
 
 // ── WebSocket server → client events ──────────────────────────────────────────
@@ -114,10 +162,37 @@ export type WsEvent =
       created_at?: string;
     }
   | { type: 'tool_call'; tool: string; args?: Record<string, unknown> }
-  | { type: 'activity_status'; status: string }
-  | { type: 'sub_agent_start'; task_id: string; agent_name?: string; task_title?: string }
-  | { type: 'sub_agent_chunk'; task_id: string; content: string }
-  | { type: 'task_created' | 'task_updated' | 'task_deleted'; task?: TaskItem }
+  | { type: 'activity_status'; status: string; label?: string; tool?: string }
+  | { type: 'sub_agent_start'; task_id: string; agent_name?: string; task_title?: string; sub_chat_id?: string }
+  | { type: 'sub_agent_chunk'; task_id: string; content?: string }
+  | { type: 'sub_agent_step_start'; task_id: string; step_id: string; step_name?: string; step_label?: string }
+  | { type: 'sub_agent_step_done'; task_id: string; step_id: string; status: string; error?: string }
+  | { type: 'sub_agent_done'; task_id: string; failed?: boolean; output?: string }
+  | { type: 'task_created' | 'task_updated'; task?: TaskItem }
+  | { type: 'task_deleted'; task_id?: string }
+  | { type: 'plan_created'; plan: Plan }
+  | { type: 'plan_step_updated'; step: PlanStep }
+  | { type: 'plan_completed' }
   | { type: 'chat_title_updated'; title: string }
+  | { type: 'chat_notes_updated' }
+  | { type: 'chat_created' }
   | { type: 'ping' }
+  | { type: 'busy'; message?: string }
   | { type: 'error'; message: string };
+
+export interface SubAgentStep {
+  stepId: string;
+  label: string;
+  status: 'running' | 'success' | 'failed';
+  error?: string;
+}
+
+export interface SubAgentActivity {
+  taskId: string;
+  agentName: string;
+  taskTitle: string;
+  content: string;
+  done: boolean;
+  failed: boolean;
+  steps: SubAgentStep[];
+}
