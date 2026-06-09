@@ -87,5 +87,18 @@ jest.mock('expo-linear-gradient', () => {
   };
 });
 
+// ── react-native-safe-area-context: provide static insets (no provider tree) ──
+jest.mock('react-native-safe-area-context', () => {
+  const React = require('react');
+  const insets = { top: 0, right: 0, bottom: 0, left: 0 };
+  return {
+    SafeAreaProvider: ({ children }) => children,
+    SafeAreaView: (props) => React.createElement('SafeAreaView', props, props.children),
+    SafeAreaInsetsContext: React.createContext(insets),
+    useSafeAreaInsets: () => insets,
+    useSafeAreaFrame: () => ({ x: 0, y: 0, width: 390, height: 844 }),
+  };
+});
+
 // Silence the reanimated warning in the RN test env if it gets pulled in.
 global.__reanimatedWorkletInit = () => {};
