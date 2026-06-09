@@ -145,13 +145,14 @@ auto-tag:
       fi
     - pnpm install --no-frozen-lockfile
 
-# Auto APK build on every push to main.
+# Auto APK build on every push to main. Only runs when EXPO_TOKEN is configured
+# (cloud builds need it); otherwise the job is skipped so CI isn't blocked.
 eas:android:
   <<: *eas_base
   script:
     - pnpm dlx eas-cli@latest build --platform android --profile "$EAS_PROFILE_ANDROID" --non-interactive
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$EXPO_TOKEN && $CI_COMMIT_BRANCH == "main"'
 
 # Production AAB on tag push (created by auto-tag or manually).
 eas:release:
@@ -159,7 +160,7 @@ eas:release:
   script:
     - pnpm dlx eas-cli@latest build --platform android --profile "$EAS_PROFILE_RELEASE" --non-interactive
   rules:
-    - if: '$CI_COMMIT_TAG'
+    - if: '$EXPO_TOKEN && $CI_COMMIT_TAG'
 
 # iOS is manual — first run prompts EAS to set up Apple credentials.
 eas:ios:
@@ -167,7 +168,7 @@ eas:ios:
   script:
     - pnpm dlx eas-cli@latest build --platform ios --profile "$EAS_PROFILE_ANDROID" --non-interactive
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$EXPO_TOKEN && $CI_COMMIT_BRANCH == "main"'
       when: manual
       allow_failure: true
 
