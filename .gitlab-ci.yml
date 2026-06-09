@@ -19,6 +19,7 @@
 
 stages:
   - validate
+  - test
   - tag
   - build
 
@@ -58,6 +59,44 @@ typecheck:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_COMMIT_TAG'
+
+# ── test ────────────────────────────────────────────────────────────────────--
+# Unit + component tests (jest-expo) with coverage, plus a strict type-check.
+# Runs in a clean node container via pnpm/corepack (host-npm rule doesn't apply
+# in CI). Coverage is parsed by GitLab from cobertura + the regex below.
+test:
+  stage: test
+  script:
+    - pnpm install --frozen-lockfile
+    - pnpm exec tsc --noEmit
+    - pnpm run test:coverage
+  coverage: '/All files[^|]*\|[^|]*\s+([\d.]+)/'
+  artifacts:
+    when: always
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+    paths:
+      - coverage/
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG'
+
+# ── deadcode (report-only) ──────────────────────────────────────────────────--
+# Detects unused files / exports / dependencies with knip. Non-blocking
+# (allow_failure) — surfaced for cleanup, never gates a build or release.
+deadcode:
+  stage: test
+  allow_failure: true
+  script:
+    - pnpm install --frozen-lockfile
+    - pnpm run deadcode
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 # ── auto-tag ────────────────────────────────────────────────────────────────--
 # On a main push, if VERSION has no matching git tag yet, create & push it.
