@@ -105,7 +105,11 @@ deadcode:
 # main branch (never on tag pipelines), so it can't loop.
 auto-tag:
   stage: tag
-  image: alpine/git:latest
+  # alpine/git's ENTRYPOINT is `git`, which turns GitLab's shell script into
+  # `git sh -c ...` ("sh is not a git command"). Override it so the script runs.
+  image:
+    name: alpine/git:latest
+    entrypoint: [""]
   before_script: []
   cache: {}
   rules:
@@ -118,7 +122,7 @@ auto-tag:
         echo "Tag $TAG already exists — nothing to publish."; exit 0
       fi
       if [ -z "$GITLAB_PUSH_TOKEN" ]; then
-        echo "GITLAB_PUSH_TOKEN not set — cannot push $TAG. Add it as a masked CI/CD variable (project access token, write_repository)."; exit 1
+        echo "GITLAB_PUSH_TOKEN not set — skipping auto-tag (configure it as a masked CI/CD variable, project access token with write_repository, to enable release tagging)."; exit 0
       fi
       git config user.email "ci@parendum.com"
       git config user.name "Nexora CI"
