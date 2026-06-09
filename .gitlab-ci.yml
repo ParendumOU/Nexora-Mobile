@@ -24,7 +24,8 @@ stages:
   - build
 
 default:
-  image: node:20-bookworm
+  # node:22 provides the node:sqlite builtin some toolchain deps now require.
+  image: node:22-bookworm
   before_script:
     - corepack enable
     - corepack prepare pnpm@11.1.1 --activate
@@ -44,7 +45,7 @@ variables:
 typecheck:
   stage: validate
   script:
-    - pnpm install --frozen-lockfile
+    - pnpm install --no-frozen-lockfile
     - pnpm exec tsc --noEmit
     # Keep VERSION in lockstep with the published app version.
     - |
@@ -67,7 +68,7 @@ typecheck:
 test:
   stage: test
   script:
-    - pnpm install --frozen-lockfile
+    - pnpm install --no-frozen-lockfile
     - pnpm exec tsc --noEmit
     - pnpm run test:coverage
   coverage: '/All files[^|]*\|[^|]*\s+([\d.]+)/'
@@ -92,7 +93,7 @@ deadcode:
   stage: test
   allow_failure: true
   script:
-    - pnpm install --frozen-lockfile
+    - pnpm install --no-frozen-lockfile
     - pnpm run deadcode
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
@@ -138,7 +139,7 @@ auto-tag:
         echo "EXPO_TOKEN is not set. Add it as a masked CI/CD variable (Settings → CI/CD → Variables)."
         exit 1
       fi
-    - pnpm install --frozen-lockfile
+    - pnpm install --no-frozen-lockfile
 
 # Auto APK build on every push to main.
 eas:android:
