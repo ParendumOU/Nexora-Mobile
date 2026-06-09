@@ -145,10 +145,12 @@ auto-tag:
       fi
     - pnpm install --no-frozen-lockfile
 
-# Auto APK build on every push to main. Only runs when EXPO_TOKEN is configured
-# (cloud builds need it); otherwise the job is skipped so CI isn't blocked.
+# Auto APK build on every push to main. Only runs when EXPO_TOKEN is configured.
+# allow_failure: a per-commit cloud build (external Expo infra, signing creds)
+# shouldn't gate the test/typecheck pipeline — the tag-driven eas:release does.
 eas:android:
   <<: *eas_base
+  allow_failure: true
   script:
     - pnpm dlx eas-cli@latest build --platform android --profile "$EAS_PROFILE_ANDROID" --non-interactive
   rules:
