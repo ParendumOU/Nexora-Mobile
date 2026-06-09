@@ -58,5 +58,34 @@ jest.mock('expo-haptics', () => ({
   ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
 }));
 
+// ── @expo/vector-icons: render any icon set as a simple host element ──────────
+// Avoids the real createIconSet path, which reaches into expo-font's native
+// `loadedNativeFonts` (undefined in node → "loadedNativeFonts.forEach is not a
+// function"). A Proxy returns a stub component for every icon family.
+jest.mock('@expo/vector-icons', () => {
+  const React = require('react');
+  return new Proxy(
+    {},
+    { get: () => (props) => React.createElement('Icon', props, props.children) }
+  );
+});
+
+// ── expo-font: no native font registry in node ────────────────────────────────
+jest.mock('expo-font', () => ({
+  useFonts: () => [true, null],
+  loadAsync: jest.fn(async () => {}),
+  isLoaded: jest.fn(() => true),
+  isLoading: jest.fn(() => false),
+  loadedNativeFonts: [],
+}));
+
+// ── expo-linear-gradient: passthrough host element ────────────────────────────
+jest.mock('expo-linear-gradient', () => {
+  const React = require('react');
+  return {
+    LinearGradient: (props) => React.createElement('LinearGradient', props, props.children),
+  };
+});
+
 // Silence the reanimated warning in the RN test env if it gets pulled in.
 global.__reanimatedWorkletInit = () => {};
