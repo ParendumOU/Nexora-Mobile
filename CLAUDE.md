@@ -206,3 +206,27 @@ with notes → it appears in the NexoraWeb `/changelog`. NexoraDocs changelog is
 tag-push webhook once: GitLab → Settings → Webhooks → `https://nexora-gw.parendum.com/webhooks/gitlab/tag`,
 Tag push events, token = `GITLAB_WEBHOOK_SECRET`. Runners use pnpm via corepack (CI is a clean
 container — the host-npm rule doesn't apply there).
+
+---
+
+## 12. Testing & CI (added 2026-06-10)
+
+- **Unit/component tests:** `__tests__/` (jest-expo + React Native Testing Library). Covers QR
+  pairing payload + device-token flow, the API/WS client, Zustand stores, `MessageBubble`,
+  `LinkScreen`, and a version-lockstep assertion (`VERSION` == `app.json` == `package.json`).
+- **`jest.config.js`:** `transformIgnorePatterns` is **pnpm-aware** — it peers past
+  `.pnpm/<pkg>@<ver>/node_modules/` and prefix-matches unscoped packages (`expo[^/]*`,
+  `react-native[^/]*`) so RN/Expo deps shipping untranspiled Flow/ESM are transformed.
+- **`jest.setup.js` mocks** the native-only modules so tests run in a node container:
+  `expo-secure-store` (in-memory), `expo-camera`, `expo-router`, `expo-haptics`,
+  `@expo/vector-icons` (Proxy → stub element — avoids expo-font's native `loadedNativeFonts`),
+  `expo-font`, `expo-linear-gradient`, `react-native-safe-area-context` (static insets).
+- **CI** (`.gitlab-ci.yml`): `typecheck` (tsc + version-lockstep) and `test` (jest + coverage)
+  are **hard gates**; `deadcode` (knip) is report-only. Image bumped to `node:22-bookworm`
+  (provides the `node:sqlite` builtin a toolchain dep needs); `@types/node` added so test files
+  resolve node globals (`fs`/`path`/`global`).
+- **Release-job fixes:** `auto-tag` now overrides the `alpine/git` entrypoint (`entrypoint: [""]`,
+  the image's entrypoint is `git`, which broke the shell script) and **skips cleanly** (exit 0)
+  when `GITLAB_PUSH_TOKEN` is unset. The EAS build jobs are **gated on `$EXPO_TOKEN`** (skip when
+  absent) and `eas:android` is `allow_failure` (a per-commit cloud build shouldn't gate the test
+  pipeline; the tag-driven `eas:release` stays a hard gate).
