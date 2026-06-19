@@ -124,6 +124,12 @@ language.
 
 ---
 
+## License
+
+[MIT](LICENSE) © Parendum OÜ
+
+---
+
 ## Star history
 
 <a href="https://star-history.com/#ParendumOU/Nexora-Mobile&Date">
