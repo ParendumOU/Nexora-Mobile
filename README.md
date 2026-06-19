@@ -9,6 +9,12 @@ matching Nexora's official dark-first branding.
 ![Release](https://img.shields.io/github/v/release/ParendumOU/Nexora-Mobile?sort=semver)
 ![Stars](https://img.shields.io/github/stars/ParendumOU/Nexora-Mobile?style=social)
 
+<br>
+
+<video src="https://github.com/ParendumOU/Nexora-Mobile/releases/download/v0.1.1/NexoraLandscape.mp4" controls muted loop playsinline width="720"></video>
+
+▶ **[Watch the demo](https://nexora.parendum.com/NexoraLandscape.mp4)** · [nexora.parendum.com](https://nexora.parendum.com)
+
 </div>
 
 The app connects to **your own** Nexora instance (LAN or VPN). It is linked to a workspace
@@ -117,5 +123,5 @@ language.
 ## Star history
 
 <a href="https://star-history.com/#ParendumOU/Nexora-Mobile&Date">
-  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ParendumOU/Nexora-Mobile&type=Date" width="640">
+  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ParendumOU/Nexora-Mobile&type=Date&theme=dark" width="640">
 </a>
