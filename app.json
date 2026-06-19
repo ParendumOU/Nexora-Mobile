@@ -1,0 +1,82 @@
+{
+  "expo": {
+    "name": "Nexora",
+    "slug": "nexora-mobile",
+    "version": "0.1.1",
+    "orientation": "portrait",
+    "scheme": "nexora",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a0a0f"
+    },
+    "backgroundColor": "#0a0a0f",
+    "primaryColor": "#6366f1",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.parendum.nexora",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Nexora uses the camera to scan the pairing QR code shown on your Nexora workspace.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.parendum.nexora",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0a0a0f"
+      },
+      "permissions": [
+        "CAMERA",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.25"
+          }
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Nexora uses the camera to scan the pairing QR code shown on your Nexora workspace."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0a0a0f",
+          "image": "./assets/splash.png",
+          "resizeMode": "contain"
+        }
+      ]
+    ],
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/icon.png"
+    },
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "181d6468-804a-44a3-870c-c5af3b9f1e96"
+      }
+    },
+    "owner": "nexoraparendum"
+  }
+}

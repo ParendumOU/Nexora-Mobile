@@ -1,0 +1,25 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "app/**/*.{ts,tsx}",
+    "jest.setup.js",
+    "jest.config.js",
+    "babel.config.js"
+  ],
+  "project": ["app/**/*.{ts,tsx}", "src/**/*.{ts,tsx}"],
+  "ignore": ["dist/**", "artifacts/**", ".expo/**", "expo-env.d.ts"],
+  "ignoreDependencies": [
+    "@babel/runtime",
+    "@expo/metro-runtime",
+    "expo-build-properties",
+    "expo-font",
+    "expo-system-ui",
+    "react-dom",
+    "react-native-web",
+    "react-test-renderer"
+  ],
+  "ignoreBinaries": ["expo", "eas"],
+  "paths": {
+    "@/*": ["./src/*"]
+  }
+}
