@@ -11,7 +11,7 @@ matching Nexora's official dark-first branding.
 
 <br>
 
-<video src="https://nexora.parendum.com/NexoraLandscape.mp4" controls muted loop playsinline width="720"></video>
+<video src="https://github.com/ParendumOU/Nexora-Mobile/releases/download/v0.1.1/NexoraLandscape.mp4" controls muted loop playsinline width="720"></video>
 
 ▶ **[Watch the demo](https://nexora.parendum.com/NexoraLandscape.mp4)** · [nexora.parendum.com](https://nexora.parendum.com)
 
