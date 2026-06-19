@@ -6,6 +6,11 @@ which the Gateway then surfaces on https://nexora.parendum.com/changelog.
 
 Format: one `## <version>` heading per release, newest first.
 
+## 0.1.1
+
+- Public release on GitHub ([ParendumOU/Nexora-Mobile](https://github.com/ParendumOU/Nexora-Mobile)).
+- README refresh: GitHub links, correct backend migration reference (`051_device_tokens`).
+
 ## 0.1.0
 
 First release — native iOS & Android client for a self-hosted Nexora / Nexora Cloud instance.

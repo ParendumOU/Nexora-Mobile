@@ -1,8 +1,15 @@
+<div align="center">
+
 # Nexora Mobile
 
-Native iOS + Android client for self-hosted [Nexora](../Nexora) workspaces. Built with
-Expo (React Native + TypeScript). Telegram-style fluid chat UI matching Nexora's official
-dark-first branding.
+**Native iOS + Android client for self-hosted [Nexora](https://github.com/ParendumOU/Nexora)
+workspaces.** Built with Expo (React Native + TypeScript). Telegram-style fluid chat UI
+matching Nexora's official dark-first branding.
+
+![Release](https://img.shields.io/github/v/release/ParendumOU/Nexora-Mobile?sort=semver)
+![Stars](https://img.shields.io/github/stars/ParendumOU/Nexora-Mobile?style=social)
+
+</div>
 
 The app connects to **your own** Nexora instance (LAN or VPN). It is linked to a workspace
 by scanning a pairing QR code shown in the Nexora web settings — no passwords are typed on
@@ -28,8 +35,8 @@ WebSocket endpoint. The `nxd_` device secret is per-device and individually revo
 **Settings → Devices** on the web (or **Unlink** on the phone) — without logging out the
 user's web/CLI sessions.
 
-> Backend requirement: this app needs core migration **041_device_tokens** and the
-> `/api/auth/device/*` endpoints (shipped in the Nexora core repo alongside this app).
+> Backend requirement: this app needs core migration **051_device_tokens** and the
+> `/api/auth/device/*` endpoints (shipped in the [Nexora core repo](https://github.com/ParendumOU/Nexora)).
 > Run `docker compose exec backend alembic upgrade head` after pulling core.
 
 ---
@@ -104,3 +111,11 @@ Pulled from the Nexora web frontend (dark-first):
 
 Subtle hairline borders + indigo glow instead of heavy shadows, matching the web visual
 language.
+
+---
+
+## Star history
+
+<a href="https://star-history.com/#ParendumOU/Nexora-Mobile&Date">
+  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ParendumOU/Nexora-Mobile&type=Date" width="640">
+</a>

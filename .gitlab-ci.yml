@@ -200,3 +200,64 @@ release:
     tag_name: '$CI_COMMIT_TAG'
     name: 'Nexora Mobile $CI_COMMIT_TAG'
     description: release_notes.md
+
+# ── publish-github ────────────────────────────────────────────────────────────
+# On tag: push a SINGLE squashed commit (the tag's tree, minus internal-only
+# files) onto the public GitHub repo's main, push the tag, and create a GitHub
+# Release whose notes come from the matching CHANGELOG.md section. GitLab's
+# internal commit history is never exposed. Skips cleanly if GH_TOKEN /
+# GITHUB_REPO_SLUG are unset.
+#
+# Required masked CI/CD vars:
+#   GH_TOKEN          — GitHub fine-grained PAT, contents:write on the public repo
+#   GITHUB_REPO_SLUG  — e.g. parendum-oss/nexora-mobile
+publish-github:
+  stage: build
+  image:
+    name: alpine/git:latest
+    entrypoint: [""]
+  variables:
+    GITHUB_EXCLUDE: "CLAUDE.md .claude .gitlab-ci.yml"
+  before_script:
+    - apk add --no-cache curl jq >/dev/null
+  cache: {}
+  rules:
+    - if: '$CI_COMMIT_TAG'
+  script:
+    - |
+      set -e
+      if [ -z "$GH_TOKEN" ] || [ -z "$GITHUB_REPO_SLUG" ]; then
+        echo "GH_TOKEN / GITHUB_REPO_SLUG unset — skipping GitHub publish."; exit 0
+      fi
+      REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPO_SLUG}.git"
+      TMP="$(mktemp -d)"
+      if git clone --depth 1 --branch main "$REMOTE" "$TMP" 2>/dev/null; then
+        echo "Continuing existing GitHub main history."
+      else
+        rm -rf "$TMP"; mkdir -p "$TMP"
+        git -C "$TMP" init -q
+        git -C "$TMP" checkout -q -b main
+        git -C "$TMP" remote add origin "$REMOTE"
+      fi
+      find "$TMP" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+      git -C "$CI_PROJECT_DIR" archive HEAD | tar -x -C "$TMP"
+      ( cd "$TMP" && rm -rf $GITHUB_EXCLUDE )
+      cd "$TMP"
+      git add -A
+      git -c user.email=ci@parendum.com -c user.name="Nexora CI" \
+        commit -q -m "Release ${CI_COMMIT_TAG}" || echo "No tree changes since last release."
+      git push -q origin HEAD:main
+      git tag "$CI_COMMIT_TAG" 2>/dev/null || true
+      git push -q origin "refs/tags/${CI_COMMIT_TAG}" || true
+      echo "Pushed squashed tree + tag ${CI_COMMIT_TAG} → ${GITHUB_REPO_SLUG}."
+      VER="${CI_COMMIT_TAG#v}"; NOTES=""
+      if [ -f CHANGELOG.md ]; then
+        NOTES="$(awk -v v="$VER" '$0 ~ "^## \\[?" v "\\]?([^0-9].*)?$" {f=1; next} /^## / {f=0} f {print}' CHANGELOG.md | sed '/^[[:space:]]*$/d')"
+      fi
+      [ -z "$NOTES" ] && NOTES="Release ${CI_COMMIT_TAG}"
+      PAYLOAD="$(jq -n --arg t "$CI_COMMIT_TAG" --arg b "$NOTES" '{tag_name:$t,name:$t,body:$b,draft:false,prerelease:false}')"
+      CODE="$(curl -sS -o /tmp/rel.json -w '%{http_code}' -X POST \
+        -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" \
+        "https://api.github.com/repos/${GITHUB_REPO_SLUG}/releases" -d "$PAYLOAD")"
+      if [ "$CODE" = "201" ]; then echo "GitHub Release ${CI_COMMIT_TAG} created."
+      else echo "Release API HTTP $CODE (likely already exists) — continuing."; cat /tmp/rel.json || true; fi
