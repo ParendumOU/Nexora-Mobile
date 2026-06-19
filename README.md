@@ -11,6 +11,8 @@ matching Nexora's official dark-first branding.
 ![Release](https://img.shields.io/github/v/release/ParendumOU/Nexora-Mobile?sort=semver)
 ![Stars](https://img.shields.io/github/stars/ParendumOU/Nexora-Mobile?style=social)
 
+**[🌐 Website](https://nexora.parendum.com) · [📖 Docs](https://docs.nexora.parendum.com) · [🧩 Marketplace](https://marketplace.nexora.parendum.com)**
+
 <br>
 
 <a href="https://nexora.parendum.com">
