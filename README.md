@@ -134,10 +134,10 @@ language.
 
 ## Star history
 
-<a href="https://star-history.com/#ParendumOU/Nexora-Mobile&Date">
+<a href="https://www.star-history.com/?repos=ParendumOU%2FNexora-Mobile&type=date&legend=top-left">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ParendumOU/Nexora-Mobile&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=ParendumOU/Nexora-Mobile&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ParendumOU/Nexora-Mobile&type=Date&theme=dark" width="100%" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=ParendumOU/Nexora-Mobile&type=date&theme=dark&legend=top-left" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=ParendumOU/Nexora-Mobile&type=date&legend=top-left" />
+    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=ParendumOU/Nexora-Mobile&type=date&legend=top-left" />
   </picture>
 </a>
