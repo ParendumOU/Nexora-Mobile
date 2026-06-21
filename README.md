@@ -17,7 +17,9 @@ matching Nexora's official dark-first branding.
 ![React Native](https://img.shields.io/badge/React%20Native-0.76-61DAFB?logo=react&logoColor=black&style=flat-square)
 ![Platforms](https://img.shields.io/badge/platforms-iOS%20·%20Android-6366f1?style=flat-square)
 
-<video src="https://nexora.parendum.com/NexoraLandscape.mp4" controls muted loop playsinline width="720"></video>
+<a href="https://nexora.parendum.com">
+  <img src=".github/nexora-demo.gif" alt="Nexora — AI-agent orchestration platform (click to watch the full demo)" width="760">
+</a>
 
 **[🌐 Website](https://nexora.parendum.com) · [📖 Docs](https://docs.nexora.parendum.com) · [🧩 Marketplace](https://marketplace.nexora.parendum.com)**
 
