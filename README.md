@@ -22,7 +22,7 @@ matching Nexora's official dark-first branding.
 <br>
 
 <a href="https://nexora.parendum.com">
-  <img src="https://github.com/ParendumOU/Nexora-Mobile/releases/download/v0.1.1/nexora_demo.gif" alt="Nexora demo" width="720">
+  <img src=".github/nexora-demo.gif" alt="Nexora demo" width="720">
 </a>
 
 ▶ **[Watch the full demo at nexora.parendum.com](https://nexora.parendum.com)**
