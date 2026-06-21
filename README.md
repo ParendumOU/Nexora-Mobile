@@ -8,24 +8,31 @@
 workspaces.** Built with Expo (React Native + TypeScript). Telegram-style fluid chat UI
 matching Nexora's official dark-first branding.
 
-![Release](https://img.shields.io/github/v/release/ParendumOU/Nexora-Mobile?sort=semver)
+![Release](https://img.shields.io/github/v/release/ParendumOU/Nexora-Mobile?sort=semver&color=8b5cf6&style=flat-square)
+![License](https://img.shields.io/github/license/ParendumOU/Nexora-Mobile?color=6366f1&style=flat-square)
+![PRs welcome](https://img.shields.io/badge/PRs-welcome-6366f1?style=flat-square)
 ![Stars](https://img.shields.io/github/stars/ParendumOU/Nexora-Mobile?style=social)
 
+![Expo](https://img.shields.io/badge/Expo-SDK%2052-000020?logo=expo&logoColor=white&style=flat-square)
+![React Native](https://img.shields.io/badge/React%20Native-0.76-61DAFB?logo=react&logoColor=black&style=flat-square)
+![Platforms](https://img.shields.io/badge/platforms-iOS%20·%20Android-6366f1?style=flat-square)
+
+<video src="https://raw.githubusercontent.com/ParendumOU/Nexora-Mobile/main/.github/nexora-demo.mp4" controls muted width="720"></video>
+
 **[🌐 Website](https://nexora.parendum.com) · [📖 Docs](https://docs.nexora.parendum.com) · [🧩 Marketplace](https://marketplace.nexora.parendum.com)**
-
-<br>
-
-<a href="https://nexora.parendum.com">
-  <img src="https://github.com/ParendumOU/Nexora-Mobile/releases/download/v0.1.1/nexora_demo.gif" alt="Nexora demo" width="720">
-</a>
-
-▶ **[Watch the full demo at nexora.parendum.com](https://nexora.parendum.com)**
 
 </div>
 
 The app connects to **your own** Nexora instance (LAN or VPN). It is linked to a workspace
 by scanning a pairing QR code shown in the Nexora web settings — no passwords are typed on
 the device, and each device gets its own revocable token.
+
+### Why use it?
+
+- **📱 Your agents in your pocket.** Chat with self-hosted Nexora agents, with live streaming replies.
+- **🔐 No password on the device.** QR-pair once; each phone holds its own revocable token in the OS keychain.
+- **🏠 Points at *your* server.** No Parendum backend — your data never leaves your infra.
+- **🎨 Native, dark-first UI** matching the Nexora brand.
 
 ---
 
@@ -126,9 +133,23 @@ language.
 
 ---
 
+## Contributing
+
+Issues and PRs welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md) and
+[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Security reports: [`SECURITY.md`](SECURITY.md).
+
+---
+
 ## License
 
 [MIT](LICENSE) © Parendum OÜ
+
+---
+
+## ⭐ Like the app?
+
+Drop a star — it helps others find Nexora Mobile. New to the platform? Start at
+**[nexora.parendum.com](https://nexora.parendum.com)**.
 
 ---
 
