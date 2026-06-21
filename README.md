@@ -17,7 +17,7 @@ matching Nexora's official dark-first branding.
 ![React Native](https://img.shields.io/badge/React%20Native-0.76-61DAFB?logo=react&logoColor=black&style=flat-square)
 ![Platforms](https://img.shields.io/badge/platforms-iOS%20·%20Android-6366f1?style=flat-square)
 
-<video src="https://raw.githubusercontent.com/ParendumOU/Nexora-Mobile/main/.github/nexora-demo.mp4" controls muted width="720"></video>
+<video src="https://nexora.parendum.com/NexoraLandscape.mp4" controls muted loop playsinline width="720"></video>
 
 **[🌐 Website](https://nexora.parendum.com) · [📖 Docs](https://docs.nexora.parendum.com) · [🧩 Marketplace](https://marketplace.nexora.parendum.com)**
 
