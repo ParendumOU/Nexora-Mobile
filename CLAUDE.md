@@ -1,5 +1,24 @@
 # Nexora Mobile — Repository Guide
 
+## ⚠ Publishing & commit identity (READ FIRST — do not repeat past mistakes)
+
+- **Publishes to BOTH:** GitLab `origin` (`gitlab.com/parendum/nexora/nexora-mobile`, source of truth)
+  **and** public GitHub **[ParendumOU/Nexora-Mobile](https://github.com/ParendumOU/Nexora-Mobile)**.
+  - The GitLab→GitHub CI mirror is unreliable (no runners) — after pushing GitLab, **push to GitHub
+    manually too**. GitHub `main` keeps its own curated history (disjoint from GitLab): add commits
+    on top of the GitHub tip; never force GitLab's full internal history over it.
+- **Commit identity — ALWAYS `Parendum <295081442+ParendumOU@users.noreply.github.com>`.** Local git
+  is already configured this way. NEVER commit as a personal account (e.g. ConnorDev1337 /
+  connordev@protonmail.com).
+- **NEVER add a `Co-Authored-By:` trailer. NEVER mention Claude / AI / assistants** anywhere —
+  commit messages, PR titles/bodies, code comments, or docs. Always write as the Nexora/Parendum team.
+- GitLab `main` allows force-push; GitHub `main` is unprotected. (All history was reattributed to
+  ParendumOU on 2026-06-21.)
+- **This `CLAUDE.md` is GitLab-only — never publish it to GitHub.** The CI `publish-github` job
+  already strips it (plus `.claude/`, `.gitlab-ci.yml`) via `GITHUB_EXCLUDE` before the tagged squash
+  push, so releases never expose internal docs. Don't push it to GitHub manually either.
+  (Verified absent on GitHub 2026-06-21.)
+
 > Native iOS + Android client for **self-hosted** Nexora workspaces. Expo (React Native +
 > TypeScript). Telegram-style fluid chat UI matching Nexora's dark-first brand.
 > GitLab: `parendum/nexora/nexora-mobile` · default branch `main`.
