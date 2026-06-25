@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, refreshAccessToken, wsUrlFor } from './api';
+import { api, refreshAccessToken, wsUrlFor, wsProtocolsFor } from './api';
 import { useStore } from './store';
 import type { ChatMessage, Plan, PlanStep, SubAgentActivity, ToolCall, WsEvent } from './types';
 
@@ -240,7 +240,11 @@ export function useChat(chatId: string) {
     // Connect with the current access token (like the web frontend). We only refresh
     // when the server actually rejects us with "Unauthorized" — refreshing on every
     // connect would burst /auth/device/refresh into a 429 rate-limit.
-    const socket = new WebSocket(wsUrlFor(s.serverUrl, chatId, s.accessToken));
+    // Token goes in the WS subprotocol (#159), not the URL — keeps it out of logs.
+    const socket = new WebSocket(
+      wsUrlFor(s.serverUrl, chatId),
+      wsProtocolsFor(s.accessToken),
+    );
     ws.current = socket;
 
     socket.onopen = () => {

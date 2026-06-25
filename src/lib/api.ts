@@ -58,9 +58,20 @@ export function normalizeServerUrl(input: string): string {
   return url;
 }
 
-export function wsUrlFor(serverUrl: string, chatId: string, token: string): string {
+// Auth subprotocol scheme — must match backend WS_AUTH_SUBPROTOCOL (core #159).
+export const WS_AUTH_SUBPROTOCOL = 'nexora-bearer';
+
+// Returns the bare ws(s) URL — the token is passed as a WebSocket subprotocol
+// (see wsProtocolsFor) instead of a ?token= query param, so it never lands in
+// server/proxy access logs (#159).
+export function wsUrlFor(serverUrl: string, chatId: string, _token?: string): string {
   const ws = serverUrl.replace(/^http/i, 'ws');
-  return `${ws}/ws/chat/${chatId}?token=${encodeURIComponent(token)}`;
+  return `${ws}/ws/chat/${chatId}`;
+}
+
+// Subprotocols array to pass as `new WebSocket(url, protocols)`: [scheme, token].
+export function wsProtocolsFor(token: string): string[] {
+  return token ? [WS_AUTH_SUBPROTOCOL, token] : [];
 }
 
 // ── Pairing (no auth) ─────────────────────────────────────────────────────────
