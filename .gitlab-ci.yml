@@ -124,8 +124,8 @@ auto-tag:
       if [ -z "$GITLAB_PUSH_TOKEN" ]; then
         echo "GITLAB_PUSH_TOKEN not set — skipping auto-tag (configure it as a masked CI/CD variable, project access token with write_repository, to enable release tagging)."; exit 0
       fi
-      git config user.email "ci@parendum.com"
-      git config user.name "Nexora CI"
+      git config user.email "295081442+ParendumOU@users.noreply.github.com"
+      git config user.name "Parendum"
       git remote set-url origin "https://oauth2:${GITLAB_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
       git tag -a "$TAG" -m "Release $TAG"
       git push origin "$TAG"
@@ -244,7 +244,7 @@ publish-github:
       ( cd "$TMP" && rm -rf $GITHUB_EXCLUDE )
       cd "$TMP"
       git add -A
-      git -c user.email=ci@parendum.com -c user.name="Nexora CI" \
+      git -c user.email=295081442+ParendumOU@users.noreply.github.com -c user.name="Parendum" \
         commit -q -m "Release ${CI_COMMIT_TAG}" || echo "No tree changes since last release."
       git push -q origin HEAD:main
       git tag "$CI_COMMIT_TAG" 2>/dev/null || true
