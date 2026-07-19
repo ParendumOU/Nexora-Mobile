@@ -6,6 +6,12 @@ which the Gateway then surfaces on https://nexora.parendum.com/changelog.
 
 Format: one `## <version>` heading per release, newest first.
 
+## 0.1.2
+
+- Security fix: send WebSocket auth token via subprotocol, not URL query string
+- Brand refresh: app icon updated to new Nexora network-N mark
+- Documentation: GitHub publish CI, README polish, contributing guidelines
+
 ## 0.1.1
 
 - Public release on GitHub ([ParendumOU/Nexora-Mobile](https://github.com/ParendumOU/Nexora-Mobile)).
