@@ -157,10 +157,4 @@ Drop a star — it helps others find Nexora Mobile. New to the platform? Start a
 
 ## Star history
 
-<a href="https://www.star-history.com/?repos=ParendumOU%2FNexora-Mobile&type=date&legend=top-left">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=ParendumOU/Nexora-Mobile&type=date&theme=dark&legend=top-left" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=ParendumOU/Nexora-Mobile&type=date&legend=top-left" />
-    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=ParendumOU/Nexora-Mobile&type=date&legend=top-left" />
-  </picture>
-</a>
+[![Star History Chart](https://api.star-history.com/chart?repos=ParendumOU/Nexora-Mobile&type=date&legend=top-left&sealed_token=Z9bIquc7aMiITHfLmc6d6z3kcSQm2_sm9gTkOYmymmRUL6o1WaCUO3XYNBK9cnSNlqmnnwShLGq54lZJSB5p9Dk7uQl3Jm2p_v3ggXgZU2yPwKMzrfRcnyjX-vFNJYdNQQw2Cu4C6iu-vBBmHSEpz7jKGpDJ7CIdp86gOcFqHTBNlO1IKcapRVl_tavx)](https://www.star-history.com/?repos=ParendumOU%2FNexora-Mobile&type=date&legend=top-left)
